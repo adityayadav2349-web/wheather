@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Weather App</title>
+
+  <style>
+    body {
+      font-family: sans-serif;
+      background: linear-gradient(to right, #4facfe, #00f2fe);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      width: 320px;
+      text-align: center;
+    }
+
+    input, button {
+      padding: 10px;
+      margin: 5px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      background: #4facfe;
+      color: white;
+      border: none;
+    }
+
+    .forecast {
+      display: flex;
+      overflow-x: auto;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .card {
+      background: #eee;
+      padding: 10px;
+      border-radius: 10px;
+      min-width: 70px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+  <h2>🌤 Weather App</h2>
+
+  <input type="text" id="city" placeholder="Enter city">
+  <button onclick="getWeather()">Search</button>
+
+  <h3 id="cityName"></h3>
+  <h1 id="temp"></h1>
+
+  <div class="forecast" id="forecast"></div>
+</div>
+
+<script>
+async function getWeather() {
+  const city = document.getElementById("city").value;
+
+  if (!city) {
+    alert("Enter city");
+    return;
+  }
+
+  try {
+    let geo = await fetch(
+      `https://geocoding-api.open-meteo.com/v1/search?name=${city}`
+    );
+    let geoData = await geo.json();
+
+    let lat = geoData.results[0].latitude;
+    let lon = geoData.results[0].longitude;
+
+    // 2️⃣ Get weather
+    const res = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min&current_weather=true&timezone=auto`
+    );
+    const data = await res.json();
+
+    // Current
+    document.getElementById("cityName").innerText = city;
+    document.getElementById("temp").innerText =
+      data.current_weather.temperature + "°C";
+
+    // Forecast
+    const forecast = document.getElementById("forecast");
+    forecast.innerHTML = "";
+
+    data.daily.time.forEach((day, i) => {
+      const date = new Date(day);
+      const name = date.toLocaleDateString("en-US", { weekday: "short" });
+
+      forecast.innerHTML += `
+        <div class="card">
+          <p>${name}</p>
+          <p>${data.daily.temperature_2m_max[i]}°</p>
+        </div>
+      `;
+    });
+
+  } catch (err) {
+    alert("City not found ❌");
+  }
+}
+</script>
+
+</body>
+</html>
